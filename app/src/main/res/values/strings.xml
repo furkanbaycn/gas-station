@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">gasStation</string>
+    <string name="title_activity_maps">Map</string>
+
+    <string-array name="yakit_turu">
+        <item>LPG</item>
+        <item>Motorin</item>
+        <item>Benzin</item>
+    </string-array>
+    <string name="title_activity_last">Map</string>
+    <string name="loading">Yükleniyor</string>
+    <string name="secim_yap">Seçiminizi Yapın!</string>
+    <string name="yakit_turu_sec">Yakıt Seçiniz</string>
+    <string name="sehir_sec">Şehir Seçiniz</string>
+    <string name="ilce_sec">İlçe Seçiniz</string>
+</resources>

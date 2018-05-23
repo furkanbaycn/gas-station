@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:weightSum="2"
+    android:padding="10dp"
+    android:background="#f2f2f2">
+
+    <ImageView
+        android:id="@+id/recyler_lpg_imageView"
+        android:src="@drawable/opet"
+        android:layout_width="85dp"
+        android:layout_weight="1"
+        android:layout_height="30dp" />
+
+    <TextView
+        android:id="@+id/recycler_lpg_fiyat"
+        android:text="3.85"
+        android:textColor="#000"
+        android:textSize="20sp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+</LinearLayout>
