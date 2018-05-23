@@ -3,6 +3,7 @@ package com.example.furkanbaycan.gasstation;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,41 +17,9 @@ import com.example.furkanbaycan.gasstation.HTTPParser.DataModel;
 import java.util.ArrayList;
 import java.util.List;
 
-class RecyclerViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
-    public TextView fiyat1,fiyat2;
-    public ImageView marka;
+
+public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.RecyclerViewHolder>{
     private ItemClickListener itemClickListener;
-
-    @SuppressLint("CutPasteId")
-    public RecyclerViewHolder(View itemView) {
-        super(itemView);
-        fiyat1 = itemView.findViewById(R.id.recycler_fiyat);
-        fiyat2 = itemView.findViewById(R.id.recycler_fiyat2);
-        marka = itemView.findViewById(R.id.recyler_imageView);
-        itemView.setOnClickListener(this);
-        itemView.setOnLongClickListener(this);
-
-
-    }
-    public void setItemClickListener(ItemClickListener itemClickListener){
-        this.itemClickListener = itemClickListener;
-    }
-
-    @Override
-    public void onClick(View view) {
-        itemClickListener.onClick(view,getAdapterPosition(),false);
-
-    }
-
-    @Override
-    public boolean onLongClick(View view) {
-        itemClickListener.onClick(view,getAdapterPosition(),true);
-        return true;
-    }
-}
-
-public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerViewHolder>{
-
     private List<DataModel> listData = new ArrayList<DataModel>();
     private Context context;
 
@@ -73,17 +42,6 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerViewHolder>{
         holder.fiyat1.setText(listData.get(position).getPetrolFiyat());
         holder.fiyat2.setText(listData.get(position).getPetrolFiyat2());
         checkImage(holder,position);
-        holder.setItemClickListener(new ItemClickListener() {
-            @Override
-            public void onClick(View view, int position, boolean isLongClick) {
-                if(isLongClick){
-                    Toast.makeText(context, "Uzun Basıldı : "+ listData.get(position), Toast.LENGTH_SHORT).show();
-                }
-                else {
-                    Toast.makeText(context, " "+ listData.get(position), Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
     }
 
     private void checkImage(RecyclerViewHolder holder,int position) {
@@ -137,4 +95,38 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerViewHolder>{
     public int getItemCount() {
         return listData.size();
     }
+
+    class RecyclerViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+        public TextView fiyat1,fiyat2;
+        public ImageView marka;
+
+        @SuppressLint("CutPasteId")
+        public RecyclerViewHolder(View itemView) {
+            super(itemView);
+            fiyat1 = itemView.findViewById(R.id.recycler_fiyat);
+            fiyat2 = itemView.findViewById(R.id.recycler_fiyat2);
+            marka = itemView.findViewById(R.id.recyler_imageView);
+            itemView.setOnClickListener(this);
+
+
+        }
+        @Override
+        public void onClick(View view) {
+            if (view == itemView){
+                if(itemClickListener != null) itemClickListener.onClick(view,getAdapterPosition(),false);
+            }
+
+
+        }
+
+    }
+
+    public void setItemClickListener(ItemClickListener itemClickListener){
+        this.itemClickListener = itemClickListener;
+    }
+
+    public interface ItemClickListener {
+        void onClick(View view, int position, boolean isLongClick);
+    }
 }
+

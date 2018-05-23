@@ -16,40 +16,9 @@ import com.example.furkanbaycan.gasstation.HTTPParser.DataModel;
 import java.util.ArrayList;
 import java.util.List;
 
-class RecyclerViewHolderLPG extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
-    public TextView fiyat1;
-    public ImageView marka;
-    private ItemClickListener itemClickListener;
 
-    @SuppressLint("CutPasteId")
-    public RecyclerViewHolderLPG(View itemView) {
-        super(itemView);
-        fiyat1 = itemView.findViewById(R.id.recycler_lpg_fiyat);
-        marka = itemView.findViewById(R.id.recyler_lpg_imageView);
-        itemView.setOnClickListener(this);
-        itemView.setOnLongClickListener(this);
-
-
-    }
-    public void setItemClickListener(ItemClickListener itemClickListener){
-        this.itemClickListener = itemClickListener;
-    }
-
-    @Override
-    public void onClick(View view) {
-        itemClickListener.onClick(view,getAdapterPosition(),false);
-
-    }
-
-    @Override
-    public boolean onLongClick(View view) {
-        itemClickListener.onClick(view,getAdapterPosition(),true);
-        return true;
-    }
-}
-
-public class RecyclerAdapterLPG extends RecyclerView.Adapter<RecyclerViewHolderLPG>{
-
+public class RecyclerAdapterLPG extends RecyclerView.Adapter<RecyclerAdapterLPG.RecyclerViewHolderLPG>{
+    public RecyclerAdapterLPG.ItemClickListener itemClickListener;
     private List<DataModel> listData = new ArrayList<DataModel>();
     private Context context;
 
@@ -71,17 +40,37 @@ public class RecyclerAdapterLPG extends RecyclerView.Adapter<RecyclerViewHolderL
     public void onBindViewHolder(RecyclerViewHolderLPG holder, int position) {
         holder.fiyat1.setText(listData.get(position).getPetrolFiyat());
         checkImage(holder,position);
-        holder.setItemClickListener(new ItemClickListener() {
-            @Override
-            public void onClick(View view, int position, boolean isLongClick) {
-                if(isLongClick){
-                    Toast.makeText(context, "Uzun Basıldı : "+ listData.get(position), Toast.LENGTH_SHORT).show();
-                }
-                else {
-                    Toast.makeText(context, " "+ listData.get(position), Toast.LENGTH_SHORT).show();
-                }
+    }
+
+    class RecyclerViewHolderLPG extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
+        public TextView fiyat1;
+        public ImageView marka;
+
+        @SuppressLint("CutPasteId")
+        public RecyclerViewHolderLPG(View itemView) {
+            super(itemView);
+            fiyat1 = itemView.findViewById(R.id.recycler_lpg_fiyat);
+            marka = itemView.findViewById(R.id.recyler_lpg_imageView);
+            itemView.setOnClickListener(this);
+            itemView.setOnLongClickListener(this);
+
+
+        }
+
+        @Override
+        public void onClick(View view) {
+            if(view == itemView){
+                if(itemClickListener != null) itemClickListener.onClick(view,getAdapterPosition(),false);
             }
-        });
+
+
+        }
+
+        @Override
+        public boolean onLongClick(View view) {
+            itemClickListener.onClick(view,getAdapterPosition(),true);
+            return true;
+        }
     }
 
     private void checkImage(RecyclerViewHolderLPG holder,int position) {
@@ -134,5 +123,12 @@ public class RecyclerAdapterLPG extends RecyclerView.Adapter<RecyclerViewHolderL
     @Override
     public int getItemCount() {
         return listData.size();
+    }
+
+    public interface ItemClickListener {
+        void onClick(View view, int position, boolean isLongClick);
+    }
+    public void setItemClickListener(ItemClickListener itemClickListener){
+        this.itemClickListener = itemClickListener;
     }
 }

@@ -1,5 +1,6 @@
 package com.example.furkanbaycan.gasstation;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -26,7 +27,7 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.scalars.ScalarsConverterFactory;
 
-public class ListActivity extends BaseActivity {
+public class ListActivity extends BaseActivity implements RecyclerAdapter.ItemClickListener, RecyclerAdapterLPG.ItemClickListener{
     private LinearLayout linearLayout;
     private TextView katkili;
     private RecyclerView recyclerView;
@@ -132,11 +133,20 @@ public class ListActivity extends BaseActivity {
         recyclerView.setLayoutManager(layoutManager);
         if (yakit.equals("lpg")){
             RecyclerAdapterLPG adapter = new RecyclerAdapterLPG(dataModelArrayList,this);
+            adapter.setItemClickListener(this);
             recyclerView.setAdapter(adapter);
         }
         else {
             RecyclerAdapter adapter = new RecyclerAdapter(dataModelArrayList,this);
+            adapter.setItemClickListener(this);
             recyclerView.setAdapter(adapter);
         }
+    }
+
+
+    @Override
+    public void onClick(View view, int position, boolean isLongClick) {
+        Intent i = new Intent(this, MapsActivity.class);
+        startActivity(i);
     }
 }
