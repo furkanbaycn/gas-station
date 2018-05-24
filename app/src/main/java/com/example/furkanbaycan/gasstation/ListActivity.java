@@ -16,6 +16,7 @@ import com.example.furkanbaycan.gasstation.HTTPParser.DataModel;
 import com.example.furkanbaycan.gasstation.HTTPParser.LPGParser;
 import com.example.furkanbaycan.gasstation.HTTPParser.MotorinParser;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -147,6 +148,8 @@ public class ListActivity extends BaseActivity implements RecyclerAdapter.ItemCl
     @Override
     public void onClick(View view, int position, boolean isLongClick) {
         Intent i = new Intent(this, MapsActivity.class);
+        i.putExtra("dataModel",dataModelArrayList.get(position));
         startActivity(i);
+
     }
 }

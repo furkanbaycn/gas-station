@@ -2,7 +2,9 @@ package com.example.furkanbaycan.gasstation;
 
 import android.*;
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
 import android.location.Address;
@@ -20,6 +22,7 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.example.furkanbaycan.gasstation.HTTPParser.DataModel;
 import com.example.furkanbaycan.gasstation.Model.Location;
 import com.example.furkanbaycan.gasstation.Model.Results;
 import com.example.furkanbaycan.gasstation.Model.gasPlaces;
@@ -62,11 +65,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     //private static Context mContext;
     IGoogleAPIService mService;
 
+    private DataModel dataModel;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+
+        Intent i = getIntent();
+        dataModel = (DataModel) i.getSerializableExtra("dataModel");
+
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -112,30 +123,30 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 String placeName = googlePlace.getName();
                                 String vicinity = googlePlace.getVicinity();
                                 LatLng latLng = new LatLng(lat,lng);
-                                markerOptions.position(latLng);
-                                markerOptions.title(placeName);
-                                Log.d("tag", placeType);
-                                if(placeType.equals("gas_station")){
-                                    markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-                                }
+
+                                if (dataModel.getPetrolMarka().equals(placeName)){
+                                    markerOptions.position(latLng);
+                                    markerOptions.title(placeName);
+                                    Log.d("tag", placeType);
+                                    if(placeType.equals("gas_station")){
+                                        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+                                    }
                                 /*
-                                else {
-                                    markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
-                                }
+                                    else {
+                                        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
+                                    }
                                 */
 
-                                //HARİTAYA MARKER EKLEME
+                                    //HARİTAYA MARKER EKLEME
 
-                                mMap.addMarker(markerOptions);
+                                    mMap.addMarker(markerOptions);
 
-                                //KAMERAYI OYNATMAK İÇİN
+                                    //KAMERAYI OYNATMAK İÇİN
 
-                                mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-                                mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
+                                    mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+                                    mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
 
-
-
-
+                                }
                             }
                         }
                     }
@@ -154,6 +165,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         googlePlacesUrl.append("&radius="+10000);
         googlePlacesUrl.append("&type="+placeType);
         googlePlacesUrl.append("&sensor=true");
+        googlePlacesUrl.append("&key="+getResources().getString(R.string.browser_key));
+        Log.d("getUrl", googlePlacesUrl.toString());
+        return googlePlacesUrl.toString();
+    }
+
+    private String getTextSearchUrl(String il, String ilce) {
+        StringBuilder googlePlacesUrl = new StringBuilder();
+        googlePlacesUrl.append("https://maps.googleapis.com/maps/api/place/textsearch/json?");
+        googlePlacesUrl.append("query="+il+"+"+ilce+"+petrol");
         googlePlacesUrl.append("&key="+getResources().getString(R.string.browser_key));
         Log.d("getUrl", googlePlacesUrl.toString());
         return googlePlacesUrl.toString();
@@ -233,6 +253,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
+    @SuppressLint("RestrictedApi")
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         mLocationRequest = new LocationRequest();
