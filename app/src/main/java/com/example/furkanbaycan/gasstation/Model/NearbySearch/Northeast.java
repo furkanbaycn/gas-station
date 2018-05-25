@@ -1,10 +1,10 @@
-package com.example.furkanbaycan.gasstation.Model;
+package com.example.furkanbaycan.gasstation.Model.NearbySearch;
 
 /**
  * Created by Furkan BAYCAN on 11.03.2018.
  */
 
-public class Location {
+public class Northeast {
     private String lng;
 
     private String lat;
@@ -34,5 +34,4 @@ public class Location {
     {
         return "ClassPojo [lng = "+lng+", lat = "+lat+"]";
     }
-
 }

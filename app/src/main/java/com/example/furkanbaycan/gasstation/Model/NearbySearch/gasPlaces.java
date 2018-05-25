@@ -1,4 +1,4 @@
-package com.example.furkanbaycan.gasstation.Model;
+package com.example.furkanbaycan.gasstation.Model.NearbySearch;
 
 /**
  * Created by Furkan BAYCAN on 11.03.2018.

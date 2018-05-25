@@ -149,6 +149,8 @@ public class ListActivity extends BaseActivity implements RecyclerAdapter.ItemCl
     public void onClick(View view, int position, boolean isLongClick) {
         Intent i = new Intent(this, MapsActivity.class);
         i.putExtra("dataModel",dataModelArrayList.get(position));
+        i.putExtra("il",il);
+        i.putExtra("ilce",ilce);
         startActivity(i);
 
     }

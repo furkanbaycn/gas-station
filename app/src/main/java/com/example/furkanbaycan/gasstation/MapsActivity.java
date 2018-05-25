@@ -1,18 +1,12 @@
 package com.example.furkanbaycan.gasstation;
 
-import android.*;
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.BitmapFactory;
-import android.location.Address;
-import android.location.Geocoder;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.design.internal.BottomNavigationItemView;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
@@ -23,9 +17,9 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.example.furkanbaycan.gasstation.HTTPParser.DataModel;
-import com.example.furkanbaycan.gasstation.Model.Location;
-import com.example.furkanbaycan.gasstation.Model.Results;
-import com.example.furkanbaycan.gasstation.Model.gasPlaces;
+import com.example.furkanbaycan.gasstation.Model.NearbySearch.Results;
+import com.example.furkanbaycan.gasstation.Model.NearbySearch.gasPlaces;
+import com.example.furkanbaycan.gasstation.Model.TextSearch.TextSearch;
 import com.example.furkanbaycan.gasstation.Remote.IGoogleAPIService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -36,15 +30,10 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Locale;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -59,6 +48,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     private GoogleApiClient mGoogleClient;
     private double latitude, longitude;
+    private double lat, lng;
     private android.location.Location mLastLocation;
     private Marker mMarker;
     private LocationRequest mLocationRequest;
@@ -67,7 +57,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private DataModel dataModel;
 
-
+    private String il,ilce;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,7 +66,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         Intent i = getIntent();
         dataModel = (DataModel) i.getSerializableExtra("dataModel");
-
+        il = i.getStringExtra("il");
+        ilce = i.getStringExtra("ilce");
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -98,7 +89,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                 switch (item.getItemId()){
                     case R.id.action_gas:
-                        nearByPlace("gas_station");
+                        textSearchByPlaceName();
                         break;
 
                 }
@@ -107,9 +98,30 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
     }
 
-    private void nearByPlace(final String placeType) {
+
+    private void textSearchByPlaceName(){
+        String url = getTextSearchUrl(il,ilce);
+        mService.getTextSearch(url)
+                .enqueue(new Callback<TextSearch>() {
+            @Override
+            public void onResponse(Call<TextSearch> call, Response<TextSearch> response) {
+                lat = response.body().getResults().get(0).getGeometry().getLocation().getLat();
+                lng = response.body().getResults().get(0).getGeometry().getLocation().getLng();
+                Log.i("TEXTSEARCH", String.valueOf(latitude));
+                nearByPlace();
+            }
+
+            @Override
+            public void onFailure(Call<TextSearch> call, Throwable t) {
+
+            }
+        });
+
+    }
+    private void nearByPlace() {
         mMap.clear();
-        String url = getUrl(latitude,longitude,placeType);
+        String placeType = "gas_station";
+        String url = getUrl(lat,lng,placeType);
         mService.getNearByPlaces(url)
                 .enqueue(new Callback<gasPlaces>() {
                     @Override
@@ -127,11 +139,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 if (dataModel.getPetrolMarka().equals(placeName)){
                                     markerOptions.position(latLng);
                                     markerOptions.title(placeName);
-                                    Log.d("tag", placeType);
-                                    if(placeType.equals("gas_station")){
+                                    markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+                                  /*   if(placeType.equals("gas_station")){
                                         markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
                                     }
-                                /*
+
                                     else {
                                         markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
                                     }
@@ -171,12 +183,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private String getTextSearchUrl(String il, String ilce) {
-        StringBuilder googlePlacesUrl = new StringBuilder();
-        googlePlacesUrl.append("https://maps.googleapis.com/maps/api/place/textsearch/json?");
-        googlePlacesUrl.append("query="+il+"+"+ilce+"+petrol");
-        googlePlacesUrl.append("&key="+getResources().getString(R.string.browser_key));
-        Log.d("getUrl", googlePlacesUrl.toString());
-        return googlePlacesUrl.toString();
+        StringBuilder getTextSearchUrl = new StringBuilder();
+        getTextSearchUrl.append("https://maps.googleapis.com/maps/api/place/textsearch/json?");
+        getTextSearchUrl.append("query="+il+"+"+ilce);
+        getTextSearchUrl.append("&key="+getResources().getString(R.string.browser_key));
+        Log.d("getUrl", getTextSearchUrl.toString());
+        return getTextSearchUrl.toString();
     }
 
     private boolean checkLocationPermission() {
