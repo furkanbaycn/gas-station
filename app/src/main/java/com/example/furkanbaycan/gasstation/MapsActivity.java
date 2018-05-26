@@ -22,6 +22,7 @@ import com.example.furkanbaycan.gasstation.Model.NearbySearch.gasPlaces;
 import com.example.furkanbaycan.gasstation.Model.TextSearch.TextSearch;
 import com.example.furkanbaycan.gasstation.Remote.IGoogleAPIService;
 import com.google.android.gms.common.ConnectionResult;
+
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
@@ -30,10 +31,23 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.maps.DirectionsApi;
+import com.google.maps.GeoApiContext;
+import com.google.maps.android.PolyUtil;
+import com.google.maps.model.DirectionsResult;
+import com.google.maps.model.TravelMode;
+
+import org.joda.time.DateTime;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -44,6 +58,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         GoogleApiClient.OnConnectionFailedListener,
         LocationListener{
 
+    private static final int overview = 0;
     private static final int MY_PERMISSION_CODE = 1000;
     private GoogleMap mMap;
     private GoogleApiClient mGoogleClient;
@@ -54,10 +69,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LocationRequest mLocationRequest;
     //private static Context mContext;
     IGoogleAPIService mService;
-
+    private DirectionsResult results;
     private DataModel dataModel;
 
-    private String il,ilce;
+    private String il,ilce, yakit;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +83,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         dataModel = (DataModel) i.getSerializableExtra("dataModel");
         il = i.getStringExtra("il");
         ilce = i.getStringExtra("ilce");
+        yakit = i.getStringExtra("yakit");
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -98,16 +114,50 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
     }
 
+    private DirectionsResult getDirectionsDetails(com.google.maps.model.LatLng origin, com.google.maps.model.LatLng destination, TravelMode mode) {
+        DateTime now = new DateTime();
+        try {
+            return DirectionsApi.newRequest(getGeoContext())
+                    .mode(mode)
+                    .origin(origin)
+                    .destination(destination)
+                    .departureTime(now)
+                    .await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            return null;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        } catch (com.google.maps.errors.ApiException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    private GeoApiContext getGeoContext() {
+        GeoApiContext geoApiContext = new GeoApiContext.Builder()
+                .queryRateLimit(3)
+                .apiKey(getString(R.string.browser_key))
+                .connectTimeout(1, TimeUnit.SECONDS)
+                .readTimeout(1, TimeUnit.SECONDS)
+                .writeTimeout(1, TimeUnit.SECONDS)
+                .build();
+        return geoApiContext;
+    }
+
 
     private void textSearchByPlaceName(){
-        String url = getTextSearchUrl(il,ilce);
+        if (yakit.equals("lpg")){
+            ilce = "merkez";
+        }
+        final String url = getTextSearchUrl(il,ilce);
         mService.getTextSearch(url)
                 .enqueue(new Callback<TextSearch>() {
             @Override
             public void onResponse(Call<TextSearch> call, Response<TextSearch> response) {
                 lat = response.body().getResults().get(0).getGeometry().getLocation().getLat();
                 lng = response.body().getResults().get(0).getGeometry().getLocation().getLng();
-                Log.i("TEXTSEARCH", String.valueOf(latitude));
+                Log.i("TEXTSEARCH", url);
                 nearByPlace();
             }
 
@@ -135,8 +185,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 String placeName = googlePlace.getName();
                                 String vicinity = googlePlace.getVicinity();
                                 LatLng latLng = new LatLng(lat,lng);
-
-                                if (dataModel.getPetrolMarka().equals(placeName)){
+                                if (dataModel.getPetrolMarka().contains(placeName)){
                                     markerOptions.position(latLng);
                                     markerOptions.title(placeName);
                                     markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
@@ -150,15 +199,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 */
 
                                     //HARİTAYA MARKER EKLEME
-
                                     mMap.addMarker(markerOptions);
-
                                     //KAMERAYI OYNATMAK İÇİN
-
                                     mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
                                     mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
 
+                                    setupGoogleMapScreenSettings(mMap);
+                                    results = getDirectionsDetails(new com.google.maps.model.LatLng(latitude,longitude)
+                                            ,new com.google.maps.model.LatLng(lat,lng),TravelMode.DRIVING);
+                                    if (results != null) {
+                                        addPolyline(results, mMap);
+                                    }
+
                                 }
+                            }
+                            if (results == null){
+                                Toast.makeText(MapsActivity.this, "Aradığınız petrol bulunamadı!", Toast.LENGTH_SHORT).show();
                             }
                         }
                     }
@@ -174,7 +230,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         StringBuilder googlePlacesUrl = new StringBuilder();
         googlePlacesUrl.append("https://maps.googleapis.com/maps/api/place/nearbysearch/json?");
         googlePlacesUrl.append("location="+latitude+","+longitude);
-        googlePlacesUrl.append("&radius="+10000);
+        googlePlacesUrl.append("&radius="+20000);
         googlePlacesUrl.append("&type="+placeType);
         googlePlacesUrl.append("&sensor=true");
         googlePlacesUrl.append("&key="+getResources().getString(R.string.browser_key));
@@ -254,6 +310,26 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
+    private void addPolyline(DirectionsResult results, GoogleMap mMap) {
+
+        List<LatLng> decodedPath = PolyUtil.decode(results.routes[overview].overviewPolyline.getEncodedPath());
+        mMap.addPolyline(new PolylineOptions().addAll(decodedPath));
+    }
+
+    private void setupGoogleMapScreenSettings(GoogleMap mMap) {
+        mMap.setBuildingsEnabled(true);
+        mMap.setIndoorEnabled(true);
+        mMap.setTrafficEnabled(true);
+        UiSettings mUiSettings = mMap.getUiSettings();
+        mUiSettings.setZoomControlsEnabled(true);
+        mUiSettings.setCompassEnabled(true);
+        mUiSettings.setMyLocationButtonEnabled(true);
+        mUiSettings.setScrollGesturesEnabled(true);
+        mUiSettings.setZoomGesturesEnabled(true);
+        mUiSettings.setTiltGesturesEnabled(true);
+        mUiSettings.setRotateGesturesEnabled(true);
+    }
+
     private synchronized void buildGoogleApiClient() {
         mGoogleClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
@@ -261,6 +337,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .addApi(LocationServices.API)
                 .build();
         mGoogleClient.connect();
+
 
     }
 
@@ -284,9 +361,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
     }
-
     @Override
     public void onLocationChanged(android.location.Location location) {
         mLastLocation = location;

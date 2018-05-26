@@ -87,10 +87,6 @@ public class ListActivity extends BaseActivity implements RecyclerAdapter.ItemCl
 
     private void retrofit(String url) {
         showProgressDialog();
-        Dispatcher dispatcher = new Dispatcher(Executors.newFixedThreadPool(20));
-        dispatcher.setMaxRequests(20);
-        dispatcher.setMaxRequestsPerHost(1);
-
         Retrofit retrofit = new Retrofit.Builder()
                 .addConverterFactory(ScalarsConverterFactory.create())
                 .baseUrl(url)
@@ -151,6 +147,7 @@ public class ListActivity extends BaseActivity implements RecyclerAdapter.ItemCl
         i.putExtra("dataModel",dataModelArrayList.get(position));
         i.putExtra("il",il);
         i.putExtra("ilce",ilce);
+        i.putExtra("yakit",yakit);
         startActivity(i);
 
     }
